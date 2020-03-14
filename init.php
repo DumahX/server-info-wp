@@ -140,7 +140,7 @@ if ( is_admin() ) {
             $this->php_memory_limit = function_exists( 'ini_get' ) ? (int) ini_get( 'memory_limit' ) : __( 'N/A (ini_get function does not exist)', 'server-info-wp' );
 
             // Get the PHP error log path.
-            $this->php_error_log_path = function_exists( 'ini_get' ) ? ini_get( 'error_log' ) : __( 'N/A (ini_get function does not exist)', 'server-info-wp' );
+            $this->php_error_log_path = ! ini_get( 'error_log' ) ? __( 'N/A', 'server-info-wp' ) : ini_get( 'error_log' );
 
             // Get PHP max upload size.
             $this->php_max_upload = function_exists( 'ini_get' ) ? (int) ini_get( 'upload_max_filesize' ) : __( 'N/A (ini_get function does not exist)', 'server-info-wp' );
@@ -188,8 +188,10 @@ if ( is_admin() ) {
             echo "<th>" . __( 'CPU Usage', 'server-info-wp' ) . "</th>";
             if ( $this->is_windows ) {
                 echo "<td>" . $this->windows_cpu_usage . "</td>";
-            } else {
+            } elseif ( is_array( $this->cpu_usage ) ) {
                 echo "<td>" . $this->cpu_usage[0] . "</td>";
+            } else {
+                echo "<td>" . __( 'N/A', 'server-info-wp' ) . "</th>";
             }
             echo "</tr>";
 
