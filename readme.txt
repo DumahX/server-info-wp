@@ -1,6 +1,6 @@
 === Server Info WP ===
 Contributors: tylerthedude
-Tags: server information, server monitor, server monitoring, server info, server usage
+Tags: server information, server monitor, server monitoring, server info, server usage, server stats, server statistics
 Tested up to: 5.4
 Requires PHP: 5.3
 License: GPLv2 or later
@@ -39,3 +39,7 @@ Take the hassle out of server administration with Server Info WP. This simple pl
     Bug fix: Remove unused plugin_url property.
 2.0 - 2020-03-12 - Tyler Gilbert
     Changing version number and removing unused assets.
+2.1 - 2020-04-16 - Tyler Gilbert
+    Feature: Add server location.
+    Feature: Add PHP architecture.
+    Feature: Add number of published WordPress pages.

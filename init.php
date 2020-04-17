@@ -5,7 +5,7 @@ Plugin Name: Server Info WP
 Description: Monitor your server from the WordPress Dashboard.
 Author: Tyler Gilbert
 Author URI: https://tcgilbert.com/
-Version: 2.0
+Version: 2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: server-info-wp
@@ -40,15 +40,18 @@ if ( is_admin() ) {
         private $php_max_execution_time;
         private $php_max_upload;
         private $php_max_post;
+        private $php_architecture;
         private $server_ip;
         private $server_port;
         private $outgoing_ip;
         private $server_path;
+        private $server_location;
         private $wp_version;
         private $wp_multisite;
         private $wp_active_plugins;
         private $wp_debug_enabled;
         private $wp_users;
+        private $wp_posts;
 
         public function __construct() {
             add_action( 'load-index.php', array( $this, 'init' ) );
@@ -124,6 +127,9 @@ if ( is_admin() ) {
             // Get the server path.
             $this->server_path = defined( 'ABSPATH' ) ? ABSPATH : __( 'N/A (ABSPATH constant not defined)', 'server-info-wp' );
 
+            // Get the server location.
+            $this->server_location = function_exists( 'file_get_contents' ) && isset( $this->server_ip ) ? unserialize( file_get_contents('http://www.geoplugin.net/php.gp?ip=' . $this->server_ip ) ) : __( 'N/A (file_get_contents function does not exist or the server IP address could not be retrieved)', 'server-info-wp' );
+
             // Get and count active WordPress plugins.
             $this->wp_active_plugins = function_exists( 'get_option' ) ? count( get_option( 'active_plugins' ) ) : __( 'N/A (get_option function does not exist)', 'server-info-wp' );
 
@@ -136,6 +142,9 @@ if ( is_admin() ) {
             // Get the total number of WordPress users on the site.
             $this->wp_users = function_exists( 'count_users' ) ? count_users() : __( 'N/A (count_users function does not exist)', 'server-info-wp' );
 
+            // Get the number of published WordPress posts.
+            $this->wp_posts = wp_count_posts()->publish >= 1 ? wp_count_posts()->publish : __( '0', 'server-info-wp' );
+
             // Get PHP memory limit.
             $this->php_memory_limit = function_exists( 'ini_get' ) ? (int) ini_get( 'memory_limit' ) : __( 'N/A (ini_get function does not exist)', 'server-info-wp' );
 
@@ -147,6 +156,15 @@ if ( is_admin() ) {
 
             // Get PHP max post size.
             $this->php_max_post = function_exists( 'ini_get' ) ? (int) ini_get( 'post_max_size' ) : __( 'N/A (ini_get function does not exist)', 'server-info-wp' );
+
+            // Get the PHP architecture.
+            if ( PHP_INT_SIZE == 4 ) {
+                $this->php_architecture = "32-bit";
+            } elseif ( PHP_INT_SIZE == 8 ) {
+                $this->php_architecture = "64-bit";
+            } else {
+                $this->php_architecture = "N/A";
+            }
 
             // Get server host name.
             $this->server_hostname = function_exists( 'gethostname' ) ? gethostname() : __( 'N/A (gethostname function does not exist)', 'server-info-wp' );
@@ -221,6 +239,16 @@ if ( is_admin() ) {
             echo "</tr>";
 
             echo "<tr>";
+            echo "<th>" . __( 'Server Location', 'server-info-wp' ) . "</th>";
+            if ( is_array( $this->server_location ) && ! empty( $this->server_location ) ) {
+                /* translators: 1: city, 2: state/region, 3: country */
+                echo "<td>" . sprintf( __( '%1$s, %2$s, %3$s', 'server-info-wp' ), $this->server_location['geoplugin_city'], $this->server_location['geoplugin_regionName'], $this->server_location['geoplugin_countryName'] ) . "</td>";
+            } else {
+                echo "<td>" . __( 'N/A', 'server-info-wp' ) . "</td>";
+            }
+            echo "</tr>";
+
+            echo "<tr>";
             echo "<th>" . __( 'Server Port', 'server-info-wp' ) . "</th>";
             echo "<td>" . $this->server_port . "</td>";
             echo "</tr>";
@@ -254,6 +282,12 @@ if ( is_admin() ) {
             echo "<th>" . __( 'PHP Memory Usage', 'server-info-wp' ) . "</th>";
             /* translators: 1: memory usage, 2: memory limit */
             echo "<td>" . sprintf( __( '%1$s %% of %2$s MB',  'server-info-wp' ), $this->memory['usage'], $this->memory['limit'] ) . "</td>";
+            echo "</tr>";
+
+            echo "<tr>";
+            echo "<th>" . __( 'PHP Architecture', 'server-info-wp' ) . "</th>";
+            /* translators: 1: number of bits */
+            echo "<td>" . sprintf( __( '%1$s', 'server-info-wp' ), $this->php_architecture ) . "</td>";
             echo "</tr>";
 
             echo "<tr>";
@@ -314,6 +348,11 @@ if ( is_admin() ) {
             echo "<tr>";
             echo "<th>" . __( 'Total WordPress Users', 'server-info-wp' ) . "</th>";
             echo "<td>" . $this->wp_users['total_users'] . "</td>";
+            echo "</tr>";
+
+            echo "<tr>";
+            echo "<th>" . __( 'Published WordPress Posts', 'server-info-wp' ) . "</th>";
+            echo "<td>" . $this->wp_posts . "</td>";
             echo "</tr>";
 
             echo "</table>";
